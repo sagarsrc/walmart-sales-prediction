@@ -1,5 +1,6 @@
 # directories
-data/
+data/extracted/
+data/processed/
 research/
 .vscode
 
