@@ -1,3 +1,4 @@
+from genericpath import exists
 import os
 from os.path import exists as file_exists
 import joblib
@@ -304,10 +305,12 @@ class DataPrepare(DataHandle):
 
         return data_melted
 
-    def prepare_data(self) -> dict:
+    def prepare_data(self, eda: bool = True, eda_params: dict = None) -> dict:
         """
         Loads all data files and unpivots data
-
+        Args:
+            eda (bool) : load data for EDA
+            eda_params (dict) : parameters for getting parts of data for EDA
         Returns:
             dict: Dictionary with melted dataframes
         """
@@ -322,6 +325,46 @@ class DataPrepare(DataHandle):
             print(f"Saving {save_path}")
 
             joblib.dump(data_melted, save_path, compress=5)
+
+        if eda:
+            df_stm = data_melted['sales_train_melted']
+            # create columns for EDA
+            df_stm['item_id'] = df_stm['id'].str[:-5]
+            df_stm['dept_id'] = df_stm['id'].str[:-9]
+            df_stm['store_id'] = df_stm['id'].str[-4:]
+
+            # put sales column in the end
+            sales = df_stm['sales']
+            df_stm.drop(columns=['sales'], inplace=True)
+            df_stm['sales'] = sales
+
+            data_melted['sales_train_melted'] = df_stm
+
+            if eda_params:
+                # get lot of items that needs to be analysed
+                lot = eda_params.get("keep_items", -1)
+                save_name = eda_params.get("save_name", "eda_default_lot")
+                save_path = f"../data/processed/{save_name}.bin"
+
+                if file_exists(save_path):
+                    data_melted = joblib.load(save_path)
+                    print(f"Loading {save_path}")
+
+                else:
+                    # initialize dictionary to hold data for specific items
+                    lot_data = {}
+
+                    # get parts of dataframe with respect ot item id
+                    if lot:
+                        for k in lot:
+                            df_part = df_stm[df_stm['item_id'] == k]
+                            lot_data[k] = df_part
+
+                    del data_melted['sales_train_melted']
+                    data_melted['lot_data'] = lot_data
+
+                    joblib.dump(data_melted, save_path)
+                    print(f"Saving {save_path}")
 
         return data_melted
 
