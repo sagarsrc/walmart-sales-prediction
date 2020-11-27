@@ -1,6 +1,7 @@
 from genericpath import exists
 import os
 from os.path import exists as file_exists
+from glob import glob
 import joblib
 
 import pandas as pd
@@ -27,6 +28,14 @@ class DataHandle:
 
         print(f"Your data root path : {self.data_root}")
         os.makedirs(self.data_root+"/processed/", exist_ok=True)
+
+    def setup_data_dir(self, data_root="../data"):
+        os.makedirs(f"{data_root}/extracted", exist_ok=True)
+        os.makedirs(f"{data_root}/processed", exist_ok=True)
+
+        raw_files = glob(f"{data_root}/raw/*.zip")
+        for rf in raw_files:
+            os.system(f"unzip -d {data_root}/extracted/ {rf}")
 
     def get_calendar(self, memopt=True) -> pd.DataFrame:
         """
@@ -229,6 +238,7 @@ class DataPrepare(DataHandle):
         super().__init__(data_root=data_root)
 
         self.data_root = data_root
+        self.setup_data_dir(self.data_root)
 
     def unpivot_data(self, data: dict) -> dict:
         """
