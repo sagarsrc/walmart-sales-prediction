@@ -115,8 +115,7 @@ class Plot:
 
         print("\n\n")
         print(f"As the data is highly uneven and it is difficult to distinguish between graphs")
-        print(
-            f"We will do smoothing of daily sales of each store with window of {window} days")
+        print(f"We will do smoothing of daily sales of each store with window of {window} days")
         print("\n\n")
 
         plt.figure(figsize=[16, 7])
@@ -195,8 +194,7 @@ class Plot:
         if window:
             # smooth using rolling window average
             events = events.rolling(window).mean()
-            print(
-                f"Calendar heatmap for sales of store {K} rolling average {window} days period")
+            print(f"Calendar heatmap for sales of store {K} rolling average {window} days period")
         else:
             # do nothing
             print(f"Calendar heatmap for sales of store {K}")
