@@ -35,7 +35,13 @@ class DataHandle:
 
         raw_files = glob(f"{data_root}/raw/*.zip")
         for rf in raw_files:
-            os.system(f"unzip -d {data_root}/extracted/ {rf}")
+            # extracted file name
+            extracted_file_name = rf.replace(
+                '.zip', '').replace('raw', 'extracted')
+
+            # if not present only then extract
+            if not file_exists(extracted_file_name):
+                os.system(f"unzip -d {data_root}/extracted/ {rf}")
 
     def get_calendar(self, memopt=True) -> pd.DataFrame:
         """
