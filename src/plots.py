@@ -202,7 +202,6 @@ class Plot:
         # do calplot
         calplot.calplot(events)
         plt.show()
-        return events
 
     # ********************************************** #
     # ********************************************** #
@@ -221,8 +220,7 @@ class Plot:
     def view_per_day_sale_item(self,
                                df: pd.DataFrame,
                                df_cal: pd.DataFrame,
-                               item_name: str = "___",
-                               view_calplot=True):
+                               item_name: str = "___"):
         """
         Visualize sales of item across each store
 
@@ -230,7 +228,6 @@ class Plot:
             df (pd.DataFrame): DataFrame with details of sales of an item
             df_cal (pd.DataFrame) : calendar DataFrame
             item_name (str, optional): Name of item being analyzed. Defaults to "___".
-            view_calplot (bool, optional) : View calendar heatmap. Defaults to True. 
         """
 
         # group by days and sum all sales of that day for that item
@@ -257,17 +254,6 @@ class Plot:
             data=res,
         )
         plt.show()
-
-        if view_calplot:
-            temp = res
-            events = temp[['date', 'sales']]
-            events.set_index(keys=['date'], inplace=True)
-            events = events['sales']
-
-            print(f"Per day sales for {item_name} Heatmap")
-
-            calplot.calplot(events)
-            plt.show()
 
     ############################################################
     ############# Number of item sales per store ###############
@@ -366,8 +352,7 @@ class Plot:
         fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
         fig.set_figheight(15)
         fig.set_figwidth(12)
-        plt.suptitle(
-            f"Average sales per {period} for {item_name}", fontsize=18)
+        plt.suptitle(f"Average sales per {period} for {item_name}", fontsize=18)
 
         # initialize subplots
         plt.subplots_adjust(wspace=0.3, hspace=0.3)
@@ -381,8 +366,7 @@ class Plot:
                 df_temp = df_group.get_group(keys[k])
 
                 # group by day and sum all sales
-                per_day_sales = df_temp.groupby(
-                    by='day').agg('sum').reset_index()
+                per_day_sales = df_temp.groupby(by='day').agg('sum').reset_index()
 
                 # rename all days
                 per_day_sales['day'] = per_day_sales['day'].str.replace(
@@ -398,35 +382,65 @@ class Plot:
                                                     left_on='day',
                                                     right_on='d')
                 per_day_sales['date'] = pd.to_datetime(per_day_sales['date'])
+                
                 per_day_sales['month'] = per_day_sales['date'].apply(
                     lambda x: x.month)
-
+                
+            
+                #
                 # average sales per week
                 if period == 'week':
                     # get per month average monthly sales
                     per_period_avg_sale = per_day_sales.groupby(
                         by=['year', 'month', 'wday'])['sales'].agg(
                             'mean').reset_index()
-
+                #    
                 # average sales per month
                 if period == 'month':
                     # get per month average monthly sales
                     per_period_avg_sale = per_day_sales.groupby(
                         by=['year', 'month'])['sales'].agg('mean').reset_index()
-
+                    
+                    # get xticks for years
+                    per_period_avg_sale['year'] = per_period_avg_sale[
+                        'year'].astype(str)
+                    
+                    # get xticks for months
+                    per_period_avg_sale['month'] = per_period_avg_sale[
+                        'month'].astype(str)
+                    
+                    # convert xticks to datetime format
+                    per_period_avg_sale['date'] = pd.to_datetime(
+                        per_period_avg_sale['year'] + '-' +
+                        per_period_avg_sale['month'])
+                #
                 # average sales per year
                 if period == 'year':
                     # get per month average monthly sales
                     per_period_avg_sale = per_day_sales.groupby(
                         by=['year'])['sales'].agg('mean').reset_index()
-
-                # set x_ticks according to period
-                per_period_avg_sale[f"{period}_num"] = np.arange(
-                    per_period_avg_sale.shape[0])
+                    
+                    # get xticks for years
+                    per_period_avg_sale['year'] = per_period_avg_sale[
+                        'year'].astype(str)
+                    
+                    # convert xticks to datetime format
+                    per_period_avg_sale['date'] = pd.to_datetime(
+                        per_period_avg_sale['year'])
+                    
+                
+                if period == 'week':
+                    # set x_ticks according to period
+                    per_period_avg_sale[f"{period}_num"] = np.arange(
+                        per_period_avg_sale.shape[0])
+                    
+                    x = f"{period}_num"
+                else:
+                    x = "date"
+                
                 axes[row_no, col_no].title.set_text(f"Store {keys[k]}")
-
                 # line plot average sales per period
-                sns.lineplot(x=f"{period}_num",
+                sns.lineplot(x=x,
                              y="sales",
                              data=per_period_avg_sale,
                              ax=axes[row_no, col_no])
